@@ -11,29 +11,52 @@ import javax.servlet.http.HttpServletResponse;
  * @author akirakozov
  */
 public class QueryServlet extends HttpServlet {
-
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) {
-        String command = request.getParameter("command");
-
         try (HTMLFormatter htmlFormatter = new HTMLFormatter(response);
              DBRepository dbRepository = new DBRepository()
         ) {
-            if ("max".equals(command)) {
-                htmlFormatter.printHeader(1, "Product with max price: ");
-                htmlFormatter.printProducts(dbRepository.getMaxProductsByPrice());
-            } else if ("min".equals(command)) {
-                htmlFormatter.printHeader(1, "Product with min price: ");
-                htmlFormatter.printProducts(dbRepository.getMinProductsByPrice());
-            } else if ("sum".equals(command)) {
-                htmlFormatter.printBody("Summary price: " + dbRepository.getSumOfProduct());
-            } else if ("count".equals(command)) {
-                htmlFormatter.printBody("Number of products: " + dbRepository.getCountOfProduct());
-            } else {
-                response.getWriter().println("Unknown command: " + command);
+            try {
+                QUERIES query = QUERIES.valueOf(request.getParameter("command").toUpperCase());
+                query.process(response, htmlFormatter, dbRepository);
+            } catch (IllegalArgumentException e) {
+                htmlFormatter.printBody("Unknown command: " + request.getParameter("command"));
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public enum QUERIES {
+        MIN {
+            @Override
+            void process(HttpServletResponse response, HTMLFormatter htmlFormatter, DBRepository dbRepository) {
+                htmlFormatter.printHeader(1, "Product with min price: ");
+                htmlFormatter.printProducts(dbRepository.getMinProductsByPrice());
+            }
+        },
+        MAX {
+            @Override
+            void process(HttpServletResponse response, HTMLFormatter htmlFormatter, DBRepository dbRepository) {
+                htmlFormatter.printHeader(1, "Product with max price: ");
+                htmlFormatter.printProducts(dbRepository.getMaxProductsByPrice());
+            }
+        },
+        SUM {
+            @Override
+            void process(HttpServletResponse response, HTMLFormatter htmlFormatter, DBRepository dbRepository) {
+                htmlFormatter.printBody("Summary price: " + dbRepository.getSumOfProduct());
+            }
+        },
+        COUNT {
+            @Override
+            void process(HttpServletResponse response, HTMLFormatter htmlFormatter, DBRepository dbRepository) {
+                htmlFormatter.printBody("Number of products: " + dbRepository.getCountOfProduct());
+            }
+        };
+
+        abstract void process(HttpServletResponse response, HTMLFormatter htmlFormatter,
+                              DBRepository dbRepository);
+
     }
 }

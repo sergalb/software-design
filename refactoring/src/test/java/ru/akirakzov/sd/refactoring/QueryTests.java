@@ -84,4 +84,9 @@ public class QueryTests extends E2EServerTests {
         checkQueriesByPrices(List.of(1, 2, 3, 4, 4));
     }
 
+    @Test
+    public void unknownCommandTest() throws IOException {
+        String result = Jsoup.connect(queryProductUrl("not_existing_command")).get().body().text();
+        assertEquals("Unknown command: " + "not_existing_command", result);
+    }
 }
