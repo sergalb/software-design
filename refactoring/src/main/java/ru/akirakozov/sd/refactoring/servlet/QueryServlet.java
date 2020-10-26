@@ -1,81 +1,61 @@
 package ru.akirakozov.sd.refactoring.servlet;
 
 import ru.akirakozov.sd.refactoring.Main;
+import ru.akirakozov.sd.refactoring.repositories.DBRepository;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.function.Function;
 
 /**
  * @author akirakozov
  */
 public class QueryServlet extends HttpServlet {
-    private static String getAccumulateQueryBody(ResultSet rs) {
+
+    private void printResponse(HttpServletResponse response, String message,
+                               String responseBody) {
         try {
-            if (rs.next()) {
-                return Integer.toString(rs.getInt(1));
-            }
-            return "";
-        } catch (SQLException throwables) {
-            throw new RuntimeException(throwables);
-        }
-    }
-
-
-    private void printResponse(HttpServletResponse response, String SQLQuery, String message,
-                               Function<ResultSet, String> showHtml) {
-        try {
-            try (Connection c = DriverManager.getConnection("jdbc:sqlite:test.db")) {
-                Statement stmt = c.createStatement();
-                ResultSet rs = stmt.executeQuery(SQLQuery);
-                response.getWriter().println("<html><body>");
-                response.getWriter().println(message);
-
-                response.getWriter().println(showHtml.apply(rs));
-
-                response.getWriter().println("</body></html>");
-
-                rs.close();
-                stmt.close();
-            }
+            response.getWriter().println("<html><body>");
+            response.getWriter().println(message);
+            response.getWriter().println(responseBody);
+            response.getWriter().println("</body></html>");
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) {
         String command = request.getParameter("command");
+        try {
+            try (DBRepository dbRepository = new DBRepository()) {
+                if ("max".equals(command)) {
+                    printResponse(response,
+                                  "<h1>Product with max price: </h1>",
+                                  Main.getProductsBody(dbRepository.getMaxProductsByPrice()));
+                } else if ("min".equals(command)) {
+                    printResponse(response,
+                                  "<h1>Product with min price: </h1>",
+                                  Main.getProductsBody(dbRepository.getMinProductsByPrice()));
+                } else if ("sum".equals(command)) {
+                    printResponse(response,
+                                  "Summary price: ",
+                                  Integer.toString(dbRepository.getSumOfProduct())
+                    );
+                } else if ("count".equals(command)) {
+                    printResponse(response,
+                                  "Number of products: ",
+                                  Integer.toString(dbRepository.getCountOfProduct())
+                    );
+                } else {
+                    response.getWriter().println("Unknown command: " + command);
+                }
 
-        if ("max".equals(command)) {
-            printResponse(response, "SELECT * FROM PRODUCT ORDER BY PRICE DESC LIMIT 1",
-                          "<h1>Product with max price: </h1>",
-                          Main::formHtmlResponse);
-        } else if ("min".equals(command)) {
-            printResponse(response, "SELECT * FROM PRODUCT ORDER BY PRICE LIMIT 1",
-                          "<h1>Product with min price: </h1>",
-                          Main::formHtmlResponse);
-        } else if ("sum".equals(command)) {
-            printResponse(response,
-                          "SELECT SUM(price) FROM PRODUCT", "Summary price: ",
-                          QueryServlet::getAccumulateQueryBody);
-        } else if ("count".equals(command)) {
-            printResponse(response,
-                          "SELECT COUNT(*) FROM PRODUCT", "Number of products: ",
-                          QueryServlet::getAccumulateQueryBody);
-        } else {
-            response.getWriter().println("Unknown command: " + command);
+                response.setContentType("text/html");
+                response.setStatus(HttpServletResponse.SC_OK);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-
-        response.setContentType("text/html");
-        response.setStatus(HttpServletResponse.SC_OK);
     }
-
 }
