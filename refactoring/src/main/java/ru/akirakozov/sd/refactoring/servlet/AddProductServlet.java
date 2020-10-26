@@ -1,14 +1,12 @@
 package ru.akirakozov.sd.refactoring.servlet;
 
+import ru.akirakozov.sd.refactoring.HTMLFormatter;
 import ru.akirakozov.sd.refactoring.repositories.DBRepository;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.Statement;
 
 /**
  * @author akirakozov
@@ -16,18 +14,16 @@ import java.sql.Statement;
 public class AddProductServlet extends HttpServlet {
 
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) {
         String name = request.getParameter("name");
         long price = Long.parseLong(request.getParameter("price"));
 
-        try (DBRepository dbRepository = new DBRepository()) {
+        try (HTMLFormatter htmlFormatter = new HTMLFormatter(response);
+             DBRepository dbRepository = new DBRepository()) {
             dbRepository.addProduct(name, price);
+            htmlFormatter.printBody("OK");
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-
-        response.setContentType("text/html");
-        response.setStatus(HttpServletResponse.SC_OK);
-        response.getWriter().println("OK");
     }
 }

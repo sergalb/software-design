@@ -42,13 +42,4 @@ public class Main {
         server.start();
         server.join();
     }
-
-    static public String getProductsBody(List<Pair<String, Integer>> products) {
-        StringBuilder result = new StringBuilder();
-        for (Pair<String, Integer> product : products) {
-            result.append(product.getKey()).append("\t").append(product.getValue()).append("</br>")
-                  .append(System.lineSeparator());
-        }
-        return result.toString();
-    }
 }
