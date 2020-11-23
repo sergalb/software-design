@@ -1,0 +1,66 @@
+<html xmlns:th="http://www.thymeleaf.org">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<head>
+    <title>To-do lists</title>
+</head>
+<body>
+
+<h3>To-do lists</h3>
+
+<table>
+    <th:block th:each="todoList : ${todolists}">
+        <tr>
+            <td th:text="${todoList.name}">
+            <td></td>
+            <td></td>
+            <td>
+                <form action="#" th:action="@{'/delete-todo-list/{id}'(id=${todoList.id})}" th:method="delete">
+                    <input type="hidden" name="_method" value="delete"/>
+                    <button type="submit" class="btn btn-danger">Delete list</button>
+                </form>
+            </td>
+        </tr>
+        <tr th:each="todoPoint: ${todoList.points}">
+            <td></td>
+            <td th:text="${todoPoint.name}"></td>
+            <td th:text="${todoPoint.status}"></td>
+            <td>
+                <form action="#" th:action="@{'/delete-todo-point/{id}'(id=${todoPoint.id})}" th:method="delete">
+                    <input type="hidden" name="_method" value="delete"/>
+                    <button type="submit" class="btn btn-danger">Delete point</button>
+                </form>
+            </td>
+        </tr>
+        <tr>
+            <td></td>
+            <td>
+            <form th:object="${todopoint}" method="POST" th:action="@{/add-todo-point/{parentId}(parentId=${todoList.id})}">
+                <table>
+                    <tr>
+                        <td><label>Name:</label></td>
+                        <td><input type="text" th:field="*{name}"/></td>
+                        <td><label>Status:</label></td>
+                        <td><input type="text" th:field="*{status}"/></td>
+                        <td><input type="hidden" th:field="*{parentId}" th:value="${todoList.id}"/></td>
+                    </tr>
+                </table>
+                <input type="submit" value="add todo point">
+            </form>
+            </td>
+        </tr>
+    </th:block>
+</table>
+
+<h3>Add new list</h3>
+<form th:object="${todolist}" method="POST" action="/add-todo-list">
+    <table>
+        <tr>
+            <td><label>Name:</label></td>
+            <td><input type="text" th:field="*{name}"/></td>
+        </tr>
+    </table>
+    <input type="submit" value="add">
+</form>
+
+</body>
+</html>
